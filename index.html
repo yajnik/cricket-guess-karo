@@ -537,19 +537,18 @@
       <div class="rule"></div>
     </div>
 
-    <div id="mypreds-content">
-      <!-- Shown before user loads their preds -->
-      <div class="mypreds-login">
-        <div class="login-icon">👤</div>
-        <p>View all your past and upcoming predictions in one compact table.<br>Opens securely via your Google account.</p>
-        <a class="btn-login"
-           href="https://script.google.com/macros/s/AKfycbw8pfZ1prH6LjdOzAUmGc-Wd66NNX-MOMzYU-MxA5juRUTBnNz97kxR2rbTmEOGOaZdXA/exec"
-           target="_blank" rel="noopener"
-           onclick="return checkMyPredsUrl(this)">
-          👤 &nbsp;Open My Predictions
-        </a>
-        <p style="margin-top:14px;font-size:0.76rem;color:var(--muted);">Opens in a new tab — sign in with your Google account to see your predictions.</p>
-      </div>
+    <div class="mypreds-login">
+      <div class="login-icon">👤</div>
+      <p>See all your predictions in one place — past, today, and upcoming.<br>Opens via your Google account in a new tab.</p>
+      <a class="btn-login"
+         href="https://script.google.com/macros/s/AKfycbw8pfZ1prH6LjdOzAUmGc-Wd66NNX-MOMzYU-MxA5juRUTBnNz97kxR2rbTmEOGOaZdXA/exec"
+         target="_blank" rel="noopener"
+         onclick="return checkMyPredsUrl(this)">
+        👤 &nbsp;Open My Predictions
+      </a>
+      <p style="margin-top:14px;font-size:0.76rem;color:var(--muted);">
+        Signs in with your Google account · Opens in a new tab · Use the back button in that page to return here
+      </p>
     </div>
   </div>
 
@@ -587,7 +586,7 @@
       <div class="spinner"></div>
       <p>Loading stats…</p>
     </div>
-    <div id="stats-grid" class="stats-cards-grid"></div>
+    <div id="stats-grid"></div>
   </div>
 
 </main>
@@ -606,8 +605,8 @@
 
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vStFfPv6k--uRmcTX5v742mMIpgqgm5GzY3-vKlfZb1iaNfIa5-5ASNHAtxdbMIhPKJQYBUsbhRf4gQ/pub?gid=702336136&single=true&output=csv';
 
-// ── Fun Stats: published Google Sheet HTML page ──────────────────────────────
-const STATS_PAGE_URL = 'https://yajnik.github.io/cricket-guess-karo/funstats.html';
+// ── Fun Stats: same-domain file — no CORS issues ─────────────────────────────
+const STATS_PAGE_URL = 'funstats.html';
 
 const COL_EMOJI  = 0;
 const COL_NAME   = 1;
@@ -824,6 +823,7 @@ function renderCSV(rows) {
 }
 
 // ── LOAD FUN STATS ───────────────────────────────────────────────────────────
+// Fetches funstats.html from same domain — no CORS issues, full CSS inheritance
 async function loadStats() {
   const statusEl = document.getElementById('stats-status');
   const gridEl   = document.getElementById('stats-grid');
@@ -832,84 +832,16 @@ async function loadStats() {
   gridEl.innerHTML = '';
 
   try {
-    const html = await fetchWithProxies(STATS_PAGE_URL);
-
-    // Try to extract stat-card divs if Claude-generated HTML was pasted into the sheet cell
-    const cardMatches = html.match(/<div class="stat-card"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/g);
-    if (cardMatches && cardMatches.length > 0) {
-      // Wrap in grid and inject
-      gridEl.innerHTML = cardMatches.join('');
-      statusEl.style.display = 'none';
-      return;
-    }
-
-    // Fallback: extract the table content from the published sheet HTML
-    // Google's pubhtml wraps content in a <table> inside .waffle
-    const bodyMatch = html.match(/<div[^>]*class="[^"]*waffle[^"]*"[^>]*>([\s\S]*?)<\/div>/);
-    if (bodyMatch) {
-      // Build a clean display from the sheet table rows
-      renderStatsFromSheetHtml(html, gridEl);
-      statusEl.style.display = 'none';
-      return;
-    }
-
-    // Last fallback: show the raw page in an iframe
-    gridEl.innerHTML = `
-      <iframe
-        src="${STATS_PAGE_URL}"
-        style="width:100%;min-height:500px;border:none;border-radius:12px;background:transparent;"
-        loading="lazy"
-        title="Fun Stats">
-      </iframe>`;
+    const res = await fetch(STATS_PAGE_URL + '?nocache=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const html = await res.text();
+    if (!html || html.trim().length < 10) throw new Error('Empty');
+    gridEl.innerHTML = html;
     statusEl.style.display = 'none';
-
   } catch(e) {
-    console.error('[CPH Stats] Failed to load stats:', e);
-    // Final fallback: direct iframe (no CORS issue for iframes)
-    gridEl.innerHTML = `
-      <iframe
-        src="${STATS_PAGE_URL}"
-        style="width:100%;min-height:500px;border:none;border-radius:12px;"
-        loading="lazy"
-        title="Fun Stats">
-      </iframe>`;
-    statusEl.style.display = 'none';
+    console.error('[CPH Stats] Failed:', e);
+    statusEl.innerHTML = '<p style="color:#b34242;font-size:.85rem">⚠️ Could not load Fun Stats. Make sure funstats.html is in the same folder as index.html.</p>';
   }
-}
-
-function renderStatsFromSheetHtml(html, gridEl) {
-  // Parse rows out of Google pubhtml table
-  const rowMatches = [...html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)];
-  const cards = [];
-
-  for (const rowMatch of rowMatches) {
-    const cellMatches = [...rowMatch[1].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)];
-    const cells = cellMatches.map(m => m[1].replace(/<[^>]+>/g, '').trim());
-    if (cells.length >= 2 && cells[0]) {
-      cards.push(cells);
-    }
-  }
-
-  if (cards.length === 0) {
-    gridEl.innerHTML = `<iframe src="${STATS_PAGE_URL}" style="width:100%;min-height:500px;border:none;border-radius:12px;" loading="lazy" title="Fun Stats"></iframe>`;
-    return;
-  }
-
-  let html2 = '';
-  for (const row of cards) {
-    const label   = row[0] || '';
-    const player  = row[1] || '';
-    const value   = row[2] || '';
-    if (!label) continue;
-    html2 += `
-      <div class="stat-card">
-        <div class="stat-card-label">${label}</div>
-        ${player ? `<div class="stat-card-players">${player}</div>` : ''}
-        ${value  ? `<div class="stat-card-value">${value}</div>` : ''}
-        <div class="stat-card-footer"></div>
-      </div>`;
-  }
-  gridEl.innerHTML = html2;
 }
 
 // ── MAIN TAB SWITCHER ────────────────────────────────────────────────────────
