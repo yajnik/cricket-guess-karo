@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cricket Predictions Hub</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --green:     #1a4d2e;
+      --green-mid: #245c38;
+      --gold:      #c9a84c;
+      --gold-lt:   #e8c97a;
+      --cream:     #faf6ed;
+      --white:     #ffffff;
+      --text:      #1c1c1c;
+      --muted:     #7a7a7a;
+      --border:    rgba(201,168,76,0.18);
+      --radius:    16px;
+      --shadow-md: 0 8px 36px rgba(0,0,0,0.11);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+
+    /* HEADER */
+    header {
+      background: var(--green);
+      padding: 52px 24px 44px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 15% 60%, rgba(201,168,76,0.15) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 25%, rgba(201,168,76,0.10) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(201,168,76,0.10);
+      top: -220px; right: -100px;
+      pointer-events: none;
+    }
+    .header-inner { position: relative; z-index: 1; }
+    .badge {
+      display: inline-block;
+      background: rgba(201,168,76,0.15);
+      border: 1px solid rgba(201,168,76,0.4);
+      color: var(--gold-lt);
+      font-size: 10.5px; font-weight: 600;
+      letter-spacing: 2.8px; text-transform: uppercase;
+      padding: 5px 16px; border-radius: 50px; margin-bottom: 18px;
+    }
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 6vw, 3.2rem);
+      font-weight: 900; color: var(--white); line-height: 1.1; margin-bottom: 8px;
+    }
+    header h1 em { color: var(--gold); font-style: italic; }
+    header p.sub {
+      color: rgba(255,255,255,0.55); font-size: 0.95rem; font-weight: 300;
+      max-width: 420px; margin: 0 auto 32px; line-height: 1.65;
+    }
+
+    /* CTA BUTTON */
+    .btn-wrap { display: inline-block; position: relative; }
+    .btn-my-preds {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.12);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      color: rgba(255,255,255,0.9);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.97rem; font-weight: 600;
+      padding: 14px 28px; border-radius: 50px;
+      text-decoration: none;
+      transition: background .2s, border-color .2s;
+    }
+    .btn-my-preds:hover {
+      background: rgba(255,255,255,0.22);
+      border-color: rgba(255,255,255,0.55);
+    }
+    .btn-wrap::before {
+      content: '';
+      position: absolute; inset: -7px;
+      border-radius: 50px;
+      border: 2px solid rgba(201,168,76,0.35);
+      animation: pulse 2.4s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0; transform: scale(1.1); }
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: linear-gradient(135deg, var(--gold) 0%, #a8722a 100%);
+      color: var(--white); font-family: 'DM Sans', sans-serif;
+      font-size: 0.97rem; font-weight: 600;
+      padding: 14px 32px; border-radius: 50px; text-decoration: none;
+      box-shadow: 0 4px 24px rgba(201,168,76,0.4);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(201,168,76,0.5); }
+
+    /* MAIN */
+    main { max-width: 1060px; margin: 0 auto; padding: 48px 20px 80px; }
+
+    /* SECTION HEADING */
+    .sec-head { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .sec-head .pip { width: 8px; height: 8px; background: var(--gold); border-radius: 50%; flex-shrink: 0; }
+    .sec-head h2 { font-family: 'Playfair Display', serif; font-size: 1.35rem; font-weight: 700; color: var(--green); }
+    .sec-head .rule { flex: 1; height: 1px; background: linear-gradient(to right, rgba(201,168,76,0.35), transparent); }
+
+    /* LEADER BANNER */
+    #leader-banner {
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-mid) 100%);
+      border-radius: var(--radius); padding: 22px 28px;
+      display: flex; align-items: center; gap: 18px;
+      margin-bottom: 32px; box-shadow: var(--shadow-md);
+      border: 1px solid rgba(201,168,76,0.2);
+      opacity: 0; transform: translateY(16px);
+      transition: opacity .5s, transform .5s;
+    }
+    #leader-banner.show { opacity: 1; transform: none; }
+    .leader-crown { font-size: 2.2rem; flex-shrink: 0; }
+    .leader-info { flex: 1; }
+    .leader-info .lbl { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 3px; }
+    .leader-info .name { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: var(--white); line-height: 1.2; }
+    .leader-pts { text-align: right; flex-shrink: 0; }
+    .leader-pts .pts-val { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900; color: var(--gold); line-height: 1; }
+    .leader-pts .pts-lbl { font-size: 0.7rem; color: rgba(255,255,255,0.45); letter-spacing: 1.5px; text-transform: uppercase; }
+
+    /* TABLE CARD */
+    .table-card {
+      background: var(--white);
+      border-radius: var(--radius); box-shadow: var(--shadow-md);
+      border: 1px solid var(--border); overflow: hidden; margin-bottom: 48px;
+    }
+    .table-card-header {
+      background: var(--green); padding: 13px 22px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .table-card-header .t-title {
+      font-size: 0.78rem; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: rgba(255,255,255,0.55);
+    }
+    .refresh-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.65); font-size: 0.72rem;
+      font-family: 'DM Sans', sans-serif; font-weight: 500;
+      padding: 5px 13px; border-radius: 50px; cursor: pointer;
+      transition: background .2s;
+    }
+    .refresh-btn:hover { background: rgba(255,255,255,0.14); }
+
+    /* LOADING */
+    #data-status { padding: 52px 20px; text-align: center; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(26,77,46,0.1); border-top-color: var(--green);
+      border-radius: 50%; animation: spin .85s linear infinite; margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #data-status p { font-size: 0.85rem; color: var(--muted); }
+
+    /* GRID TABLE */
+    #results-table { display: none; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .grid-inner { min-width: 600px; position: relative; }
+
+    .grid-row {
+      display: grid;
+      align-items: stretch;
+      border-bottom: 1px solid rgba(201,168,76,0.1);
+      transition: background .15s;
+    }
+    .grid-row:last-child { border-bottom: none; }
+    .grid-row:hover { background: rgba(201,168,76,0.04); }
+    .grid-row.leader-row { background: rgba(201,168,76,0.07); }
+    .grid-row.header-row { background: #f2ede0; border-bottom: 2px solid var(--border); }
+    .grid-row.header-row:hover { background: #f2ede0; }
+
+    .cell {
+      padding: 13px 14px;
+      display: flex; align-items: center;
+      font-size: 0.87rem;
+      border-right: 1px solid rgba(201,168,76,0.08);
+      background: inherit;
+    }
+    .cell:last-child { border-right: none; }
+    .cell.player {
+      font-weight: 600; color: var(--green); gap: 7px; font-size: 0.9rem;
+      position: sticky; left: 0; z-index: 2;
+      background: var(--white);
+      box-shadow: 2px 0 8px rgba(0,0,0,0.07);
+    }
+    .grid-row.leader-row .cell.player { background: #fdf8ee; }
+    .hcell {
+      padding: 11px 14px;
+      display: flex; flex-direction: column; gap: 2px;
+      border-right: 1px solid rgba(201,168,76,0.12);
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted);
+      background: #f2ede0;
+    }
+    .hcell.player-hcell {
+      position: sticky; left: 0; z-index: 3;
+      background: #f2ede0;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.07);
+    }
+    .cell.pts {
+      font-family: 'Playfair Display', serif; font-weight: 700;
+      font-size: 1.1rem; color: var(--green); justify-content: center;
+    }
+    .cell.pts.top { color: var(--gold); }
+    .cell.match { flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; }
+    .pred-team {
+      font-weight: 700; font-size: 0.8rem; color: var(--green);
+      background: rgba(26,77,46,0.08); padding: 2px 7px; border-radius: 4px;
+    }
+    .pred-score { font-size: 0.73rem; color: var(--muted); }
+    .cell.match.empty { color: #ccc; font-size: 1rem; align-items: center; justify-content: center; }
+    .hcell:last-child { border-right: none; }
+    .hcell .match-teams { font-family: 'Playfair Display', serif; font-size: 0.82rem; font-weight: 700; color: var(--green); letter-spacing: 0; text-transform: none; }
+    .hcell .match-date  { font-size: 0.67rem; color: var(--muted); font-weight: 400; letter-spacing: 0; text-transform: none; }
+    .hcell .match-result { font-size: 0.71rem; color: var(--gold); font-weight: 600; letter-spacing: 0; text-transform: none; }
+    .hcell .result-score { font-size: 0.82rem; color: var(--gold); font-weight: 700; letter-spacing: 0; text-transform: none; }
+    .hcell.player-hcell { justify-content: flex-end; }
+    .hcell.pts-hcell    { justify-content: center; align-items: center; }
+    /* WINNER / SCORE sub-column headers */
+    .match-winner-hcell { border-right: none !important; }
+    .match-score-hcell  { border-left: 1px dashed rgba(201,168,76,0.2) !important; justify-content: center; align-items: center; }
+    .sub-lbl {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 1.2px;
+      text-transform: uppercase; color: rgba(100,100,100,0.55);
+      margin-top: 3px;
+    }
+    .winner-cell { justify-content: center; }
+    .score-cell  { justify-content: center; border-left: 1px dashed rgba(201,168,76,0.15) !important; }
+    .pred-score-val {
+      font-size: 0.82rem; font-weight: 600; color: var(--muted);
+      background: rgba(0,0,0,0.04); padding: 2px 6px; border-radius: 4px;
+    }
+
+    .today-badge {
+      display: inline-block; background: var(--gold); color: var(--white);
+      font-size: 0.57rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; padding: 2px 6px; border-radius: 3px;
+      align-self: flex-start; margin-top: 1px;
+    }
+
+    /* BOTTOM CTA */
+    .bottom-cta { text-align: center; margin-top: 10px; }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; color: var(--green);
+      border: 2px solid var(--green); font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem; font-weight: 600;
+      padding: 12px 28px; border-radius: 50px; text-decoration: none;
+      transition: background .2s, color .2s;
+    }
+    .btn-secondary:hover { background: var(--green); color: var(--white); }
+
+    /* FOOTER */
+    footer {
+      text-align: center; padding: 24px 20px;
+      background: var(--green); color: rgba(255,255,255,0.35);
+      font-size: 0.75rem; letter-spacing: 0.3px;
+    }
+    footer span { color: var(--gold); }
+
+    /* REVEAL */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity .5s ease, transform .5s ease; }
+    .reveal.vis { opacity: 1; transform: none; }
+
+    /* TAB SWITCHER */
+    .tab-nav {
+      display: flex; gap: 8px;
+      background: rgba(26,77,46,0.07);
+      border: 1px solid var(--border);
+      border-radius: 50px; padding: 5px;
+      margin-bottom: 36px; width: fit-content;
+    }
+    .tab-btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem; font-weight: 600;
+      padding: 9px 24px; border-radius: 50px;
+      border: none; cursor: pointer;
+      background: transparent; color: var(--muted);
+      transition: background .2s, color .2s, box-shadow .2s;
+    }
+    .tab-btn.active {
+      background: var(--green); color: var(--white);
+      box-shadow: 0 3px 12px rgba(26,77,46,0.25);
+    }
+    .tab-btn:not(.active):hover { background: rgba(26,77,46,0.08); color: var(--green); }
+
+    /* TAB PANELS */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* STATS CARDS GRID */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px; margin-bottom: 48px;
+    }
+    .stat-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      padding: 22px 24px;
+      display: flex; flex-direction: column; gap: 10px;
+      transition: transform .18s, box-shadow .18s;
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.13); }
+    .stat-card-label {
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 1.8px; text-transform: uppercase; color: var(--muted);
+    }
+    .stat-card-players {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem; font-weight: 700;
+      color: var(--green); line-height: 1.25;
+    }
+    .stat-card-players .multi-tag {
+      display: inline-block;
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+      background: rgba(201,168,76,0.15); border: 1px solid rgba(201,168,76,0.4);
+      color: var(--gold); padding: 2px 7px; border-radius: 50px;
+      vertical-align: middle; margin-left: 6px;
+    }
+    .stat-card-value {
+      font-size: 2rem; font-weight: 900;
+      font-family: 'Playfair Display', serif;
+      color: var(--gold); line-height: 1;
+    }
+    .stat-card-footer {
+      height: 3px; border-radius: 2px;
+      background: linear-gradient(to right, var(--gold), transparent);
+      margin-top: 4px;
+    }
+    #stats-status { padding: 52px 20px; text-align: center; }
+    #stats-status p { font-size: 0.85rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="badge">🏏 IPL 2025</div>
+    <h1>Cricket <em>Predictions</em></h1>
+    <p class="sub">Predict the winner, track the points, own the leaderboard.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;margin-top:4px;">
+      <div class="btn-wrap">
+        <a class="btn"
+           href="https://docs.google.com/forms/d/e/1FAIpQLSfNSZTIzZ_B-4uymHYitWBAfQ3xQaULAUDdqj-YX32IFxf5aQ/viewform?usp=header"
+           target="_blank" rel="noopener">
+          ✏️ &nbsp;Submit Your Predictions
+        </a>
+      </div>
+      <a class="btn-my-preds" id="my-preds-btn"
+         href="https://script.google.com/macros/s/AKfycbw8pfZ1prH6LjdOzAUmGc-Wd66NNX-MOMzYU-MxA5juRUTBnNz97kxR2rbTmEOGOaZdXA/exec"
+         target="_blank" rel="noopener"
+         onclick="return checkMyPredsUrl(this)">
+        👤 &nbsp;My Predictions
+      </a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Leader Banner (always visible above tabs) -->
+  <div id="leader-banner">
+    <div class="leader-crown">👑</div>
+    <div class="leader-info">
+      <div class="lbl">Current Leader</div>
+      <div class="name" id="leader-name">—</div>
+    </div>
+    <div class="leader-pts">
+      <div class="pts-val" id="leader-pts">—</div>
+      <div class="pts-lbl">points</div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <nav class="tab-nav reveal">
+    <button class="tab-btn active" onclick="switchTab('leaderboard', this)">🏏 Leaderboard</button>
+    <button class="tab-btn" onclick="switchTab('stats', this)">📊 Fun Stats</button>
+  </nav>
+
+  <!-- TAB: Leaderboard -->
+  <div id="tab-leaderboard" class="tab-panel active">
+    <div class="sec-head reveal">
+      <div class="pip"></div>
+      <h2>Predictions &amp; Results</h2>
+      <div class="rule"></div>
+    </div>
+
+    <div class="table-card reveal">
+      <div class="table-card-header">
+        <span class="t-title">Live Standings</span>
+        <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+      </div>
+      <div id="data-status">
+        <div class="spinner"></div>
+        <p>Loading predictions…</p>
+      </div>
+      <div id="results-table"></div>
+    </div>
+
+    <div class="bottom-cta reveal">
+      <a class="btn-secondary"
+         href="https://docs.google.com/forms/d/e/1FAIpQLSfNSZTIzZ_B-4uymHYitWBAfQ3xQaULAUDdqj-YX32IFxf5aQ/viewform?usp=header"
+         target="_blank" rel="noopener">
+        ✏️ &nbsp;Haven't predicted yet? Submit here
+      </a>
+    </div>
+  </div>
+
+  <!-- TAB: Fun Stats -->
+  <div id="tab-stats" class="tab-panel">
+    <div class="sec-head reveal">
+      <div class="pip"></div>
+      <h2>Fun Stats</h2>
+      <div class="rule"></div>
+    </div>
+
+    <div id="stats-status">
+      <div class="spinner"></div>
+      <p>Loading stats…</p>
+    </div>
+    <div id="stats-grid" class="stats-grid"></div>
+  </div>
+
+</main>
+
+<footer>
+  Cricket Predictions Hub &nbsp;·&nbsp; <span>IPL 2025</span> &nbsp;·&nbsp; Predictions close before each match
+</footer>
+
+<script>
+/*
+  SHEET STRUCTURE (from screenshot):
+  ─────────────────────────────────────────────────────────────────────
+  Col B  │ Col C   │ Col D  │ Col E        │ Col F  │ Col G        │ Col H  │ …
+  ───────┼─────────┼────────┼──────────────┼────────┼──────────────┼────────┼──
+  Row 2  │ Results │        │              │        │              │        │
+  Row 3  │ Matches │ Points │ 01:RCB-SRH   │ (empty)│ 02:MI-KKR   │ (empty)│   ← merged header (value in E, blank in F)
+  Row 4  │ 🥇      │Mangesh │     0        │ 🏏      │ 🔒           │ 😊     │ 😊  ← player data
+  Row 5  │ 🥇      │ Yogi   │     0        │ 🏏🔒    │              │ 😊     │ 😊
+  Row 6+ │ (empty formula rows waiting for new players)
+  ─────────────────────────────────────────────────────────────────────
+
+  CSV columns (0-indexed, sheet col B = CSV col 0):
+    0  = emoji/rank decoration  (col B)
+    1  = player name            (col C)  ← "Matches" header label is here
+    2  = points                 (col D)
+    3  = match 1 winner pick    (col E)  ← match header label here (merged → F is blank)
+    4  = match 1 score pick     (col F)
+    5  = match 2 winner pick    (col G)  ← match header label here (merged → H is blank)
+    6  = match 2 score pick     (col H)
+    … pairs continue for each match
+
+  So matches come in PAIRS: [winner col, score col] starting at CSV col 3.
+  The header for each match pair appears only in the ODD column of the pair (winner),
+  the even column (score) is blank due to merge.
+*/
+
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vStFfPv6k--uRmcTX5v742mMIpgqgm5GzY3-vKlfZb1iaNfIa5-5ASNHAtxdbMIhPKJQYBUsbhRf4gQ/pub?gid=702336136&single=true&output=csv';
+
+// ── Constants ────────────────────────────────────────────────────────────────
+// Fixed column positions based on actual sheet layout (0-indexed from col B):
+//   0 = emoji/rank decoration
+//   1 = player name  (header row says "Matches")
+//   2 = points       (header row says "Points")
+//   3,4 = match 1 winner + score   (header merged across E+F → CSV: label in col 3, blank in col 4)
+//   5,6 = match 2 winner + score   (header merged across G+H → CSV: label in col 5, blank in col 6)
+//   … every 2 columns = one match
+const COL_EMOJI  = 0;
+const COL_NAME   = 1;
+const COL_PTS    = 2;
+const FIRST_MATCH_COL = 3;  // matches start here, in pairs: [winner, score]
+
+const FORMULA_ERRORS = new Set(['#n/a','#value!','#ref!','#div/0!','#num!','#name?','#null!','#error!']);
+
+function isFormulaError(val) {
+  return FORMULA_ERRORS.has(String(val).trim().toLowerCase());
+}
+
+function clean(val) {
+  if (!val) return '';
+  if (isFormulaError(val)) return '';
+  return String(val).trim();
+}
+
+function isBlankCell(val) {
+  const c = clean(val);
+  if (!c) return true;
+  // Only truly blank if nothing remains after removing whitespace and dash chars
+  // NOTE: emoji (🏏 🔒 😊) are VALID prediction values — do NOT strip them
+  const stripped = c.replace(/[\s\u200B-\u200D\uFEFF]/g, '').trim();
+  return stripped === '' || stripped === '\u2014' || stripped === '-';
+}
+
+function todayLabel() {
+  return new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+}
+
+// Robust CSV parser (handles quoted fields with commas inside)
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.split(/\r?\n/);
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+        else { inQ = !inQ; }
+      } else if (ch === ',' && !inQ) {
+        cols.push(cur.trim()); cur = '';
+      } else { cur += ch; }
+    }
+    cols.push(cur.trim());
+    rows.push(cols);
+  }
+  return rows;
+}
+
+// ── Detect matches from header row ───────────────────────────────────────────
+// Merged cells export as: value in first col, empty string in second col.
+// We scan from FIRST_MATCH_COL and treat every non-empty cell as a match header.
+// Each match occupies exactly 2 CSV columns: [winnerCol, scoreCol].
+function detectMatches(headerRow, totalsRow) {
+  const matches = [];
+  let i = FIRST_MATCH_COL;
+  while (i < headerRow.length) {
+    const lbl = clean(headerRow[i]);
+    if (lbl) {
+      // This column has a label → it's the winner-pick column for a match
+      const winnerCol = i;
+      const scoreCol  = i + 1; // always the next column (merged pair)
+      const resultWinner = clean(totalsRow[i])     || '';   // e.g. "RCB"
+      const resultScore  = clean(totalsRow[i + 1]) || '';   // e.g. "100"
+      const result = resultWinner || resultScore;            // kept for back-compat
+
+      // Parse label like "01: RCB-SRH (28-Mar)" or "01: RCB vs SRH (28-Mar)"
+      const dateM  = lbl.match(/\(([^)]+)\)/);
+      const teamsM = lbl.match(/(?:\d+:\s*)?(.+?)(?:\s*\([^)]+\))?$/);
+      matches.push({
+        label:         lbl,
+        teams:         teamsM ? teamsM[1].trim() : lbl,
+        date:          dateM  ? dateM[1].trim()  : '',
+        result,
+        resultWinner,
+        resultScore,
+        winnerCol,
+        scoreCol,
+      });
+      i += 2; // skip the paired empty score-column header
+    } else {
+      i++;
+    }
+  }
+  return matches;
+}
+
+async function loadData() {
+  const statusEl = document.getElementById('data-status');
+  const tableEl  = document.getElementById('results-table');
+  statusEl.style.display = 'block';
+  statusEl.innerHTML = '<div class="spinner"></div><p>Loading predictions…</p>';
+  tableEl.style.display = 'none';
+
+  const PROXIES = [
+    u => u,
+    u => 'https://corsproxy.io/?' + encodeURIComponent(u),
+    u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+    u => 'https://thingproxy.freeboard.io/fetch/' + u,
+  ];
+  let lastErr;
+  for (const proxy of PROXIES) {
+    try {
+      const url = proxy(CSV_URL + '&nocache=' + Date.now());
+      console.log('[CPH] Trying:', url.slice(0, 100));
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      if (!text || text.trim().length < 10) throw new Error('Empty response');
+      console.log('[CPH] Raw CSV (first 800 chars):\n', text.slice(0, 800));
+      const rows = parseCSV(text);
+      console.log('[CPH] Total rows parsed:', rows.length);
+      rows.slice(0, 5).forEach((r,i) => console.log(`[CPH] Row ${i}:`, r));
+      renderCSV(rows);
+      return;
+    } catch(e) {
+      console.warn('[CPH] Proxy attempt failed:', e);
+      lastErr = e;
+    }
+  }
+  console.error('[CPH] All fetch attempts failed:', lastErr);
+  document.getElementById('data-status').innerHTML =
+    '<p style="color:#b34242;font-size:.85rem">⚠️ Could not load data — all fetch attempts failed.' +
+    '<br><small>Open F12 → Console for details. Make sure the sheet is published as CSV.</small></p>';
+}
+
+function renderCSV(rows) {
+  const statusEl = document.getElementById('data-status');
+
+  // Sheet layout: row 0 = "Results" title row, row 1 = "Matches/Points/…" header, rows 2+ = players
+  // But Google publishes only the visible/data rows, so let's be flexible:
+  // We find the header row by looking for a row that contains "Matches" or "Points"
+  let headerRowIdx = -1;
+  for (let r = 0; r < Math.min(rows.length, 5); r++) {
+    const joined = rows[r].join('|').toLowerCase();
+    if (joined.includes('matches') || joined.includes('points')) {
+      headerRowIdx = r;
+      break;
+    }
+  }
+
+  if (headerRowIdx === -1 || headerRowIdx + 1 >= rows.length) {
+    statusEl.innerHTML = '<p style="color:#b34242;font-size:.85rem">⚠️ Could not find header row in CSV. Check console (F12).</p>';
+    console.warn('[CPH] Header row not found. Rows:', rows);
+    return;
+  }
+
+  // Row before the header contains match results/totals (row 0 in sheet = "Results" + totals)
+  // If header is at index 1, totals are at index 0; if header is at index 0 there are no totals
+  const totalsRow  = headerRowIdx > 0 ? rows[headerRowIdx - 1] : [];
+  const headerRow  = rows[headerRowIdx];
+  const dataRows   = rows.slice(headerRowIdx + 1);
+
+  console.log('[CPH] headerRowIdx:', headerRowIdx, '| headerRow:', headerRow);
+  console.log('[CPH] totalsRow:', totalsRow);
+
+  // ── Detect matches (pairs of winner+score columns) ──
+  const matches = detectMatches(headerRow, totalsRow);
+  console.log('[CPH] Matches detected:', matches.length, matches.map(m => m.teams));
+
+  if (matches.length === 0) {
+    statusEl.innerHTML = '<p>No match columns found in the sheet header.</p>';
+    return;
+  }
+
+  const tdy = todayLabel().toLowerCase();
+
+  // ── Build players ──
+  const players = [];
+  for (const row of dataRows) {
+    const name = clean(row[COL_NAME]);
+    if (!name || isBlankCell(name)) continue;
+    // Skip header-repeat rows
+    if (['matches','player','name','points','pts'].includes(name.toLowerCase())) continue;
+
+    const rawPts = clean(row[COL_PTS]);
+    const pts    = rawPts ? (parseFloat(rawPts) || 0) : 0;
+
+    const preds = matches.map(m => ({
+      winner: clean(row[m.winnerCol]),
+      score:  clean(row[m.scoreCol]),
+    }));
+
+    players.push({ name, pts, preds });
+  }
+
+  console.log('[CPH] Players:', players.length, players.map(p => `${p.name}(${p.pts})`));
+
+  if (players.length === 0) {
+    statusEl.innerHTML = '<p style="color:#b34242;font-size:.85rem">⚠️ No player rows found. Check console (F12).</p>';
+    return;
+  }
+
+  // ── Leader (tie-aware: all players sharing top score are co-leaders) ──
+  const sorted   = [...players].sort((a, b) => b.pts - a.pts);
+  const topPts   = sorted[0].pts;
+  const leaders  = sorted.filter(p => p.pts === topPts);
+  const leaderSet = new Set(leaders.map(p => p.name));
+  const leaderNames = leaders.map(p => p.name).join(' & ');
+  document.getElementById('leader-name').textContent = leaderNames;
+  document.getElementById('leader-pts').textContent  = topPts;
+  // Update banner label: "Co-leaders" when tied, "Current Leader" when solo
+  const bannerLbl = document.querySelector('#leader-banner .lbl');
+  if (bannerLbl) bannerLbl.textContent = leaders.length > 1 ? 'Co-leaders' : 'Current Leader';
+  document.getElementById('leader-banner').classList.add('show');
+
+  // ── Grid layout: Player | Pts | [Winner | Score] × n matches ──
+  // Each match = 2 sub-columns in the grid
+  const matchPairCols = matches.map(() => 'minmax(80px,0.9fr) minmax(70px,0.7fr)').join(' ');
+  const colT = `minmax(120px,1.6fr) 58px ${matchPairCols}`;
+
+  let html = `<div class="grid-inner">`;
+
+  // ── Header row ──
+  html += `<div class="grid-row header-row" style="grid-template-columns:${colT}">`;
+  html += `<div class="hcell player-hcell">Player</div>`;
+  html += `<div class="hcell pts-hcell">Pts</div>`;
+
+  matches.forEach(m => {
+    const isToday = m.date && m.date.toLowerCase().replace(/-/g,' ') === tdy.replace(/-/g,' ');
+    html += `<div class="hcell match-winner-hcell">`;
+    html += `<span class="match-teams">${m.teams}</span>`;
+    if (m.date)          html += `<span class="match-date">${m.date}</span>`;
+    if (isToday)         html += `<span class="today-badge">Today</span>`;
+    if (m.resultWinner)  html += `<span class="match-result">✓ ${m.resultWinner}</span>`;
+    html += `<span class="sub-lbl">Winner</span>`;
+    html += `</div>`;
+    html += `<div class="hcell match-score-hcell">`;
+    if (m.resultScore)   html += `<span class="match-result result-score">${m.resultScore}</span>`;
+    html += `<span class="sub-lbl">Score</span>`;
+    html += `</div>`;
+  });
+  html += `</div>`;
+
+  // ── Player rows ──
+  players.forEach(p => {
+    const isLeader = leaderSet.has(p.name);
+    html += `<div class="grid-row${isLeader ? ' leader-row' : ''}" style="grid-template-columns:${colT}">`;
+    html += `<div class="cell player">${isLeader ? '<span>👑</span>' : ''}${p.name}</div>`;
+    html += `<div class="cell pts${isLeader ? ' top' : ''}">${p.pts !== undefined ? p.pts : '—'}</div>`;
+
+    p.preds.forEach(pred => {
+      // Winner cell
+      if (!pred.winner || isBlankCell(pred.winner)) {
+        html += `<div class="cell match empty">—</div>`;
+      } else {
+        html += `<div class="cell match winner-cell"><span class="pred-team">${pred.winner}</span></div>`;
+      }
+      // Score cell
+      if (!pred.score || isBlankCell(pred.score)) {
+        html += `<div class="cell match score-cell empty">—</div>`;
+      } else {
+        html += `<div class="cell match score-cell"><span class="pred-score-val">${pred.score}</span></div>`;
+      }
+    });
+    html += `</div>`;
+  });
+
+  html += `</div>`;
+
+  statusEl.style.display = 'none';
+  const tableEl = document.getElementById('results-table');
+  tableEl.innerHTML = html;
+  tableEl.style.display = 'block';
+}
+
+// ── Tab switcher ─────────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  // Lazy-load stats the first time the tab is opened
+  if (name === 'stats' && !window._statsLoaded) {
+    window._statsLoaded = true;
+    loadStats();
+  }
+}
+
+// ── Stats CSV ─────────────────────────────────────────────────────────────────
+// ⚠️  Replace this URL with your published Stats sheet CSV URL
+const STATS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vStFfPv6k--uRmcTX5v742mMIpgqgm5GzY3-vKlfZb1iaNfIa5-5ASNHAtxdbMIhPKJQYBUsbhRf4gQ/pub?gid=492505710&single=true&output=csv';
+
+async function loadStats() {
+  const statusEl = document.getElementById('stats-status');
+  const gridEl   = document.getElementById('stats-grid');
+  statusEl.style.display = 'block';
+  statusEl.innerHTML = '<div class="spinner"></div><p>Loading stats…</p>';
+  gridEl.innerHTML = '';
+
+  if (STATS_CSV_URL === 'PASTE_YOUR_STATS_CSV_URL_HERE') {
+    statusEl.innerHTML = '<p style="color:#b34242;font-size:.85rem">⚠️ Stats CSV URL not set yet.<br><small>Replace PASTE_YOUR_STATS_CSV_URL_HERE in the script with your published Stats sheet URL.</small></p>';
+    return;
+  }
+
+  const SPROXIES = [
+    u => u,
+    u => 'https://corsproxy.io/?' + encodeURIComponent(u),
+    u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+    u => 'https://thingproxy.freeboard.io/fetch/' + u,
+  ];
+  let lastErrS;
+  for (const proxy of SPROXIES) {
+    try {
+      const url = proxy(STATS_CSV_URL + '&nocache=' + Date.now());
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      if (!text || text.trim().length < 10) throw new Error('Empty response');
+      console.log('[CPH Stats] Raw CSV:', text.slice(0, 600));
+      const rows = parseCSV(text);
+      console.log('[CPH Stats] Rows:', rows.length, rows);
+      renderStats(rows);
+      return;
+    } catch(e) {
+      console.warn('[CPH Stats] Proxy attempt failed:', e);
+      lastErrS = e;
+    }
+  }
+  console.error('[CPH Stats] All fetch attempts failed:', lastErrS);
+  statusEl.innerHTML = '<p style="color:#b34242;font-size:.85rem">⚠️ Could not load stats. Check the console (F12).</p>';
+}
+
+function renderStats(rows) {
+  const statusEl = document.getElementById('stats-status');
+  const gridEl   = document.getElementById('stats-grid');
+
+  // Row 0 = header (Stat | Player | Value) — skip it
+  // Rows 1+ = data
+  const dataRows = rows.slice(1).filter(r => r.length >= 2 && clean(r[0]));
+
+  if (dataRows.length === 0) {
+    statusEl.innerHTML = '<p>No stats data found.</p>';
+    return;
+  }
+
+  let html = '';
+  for (const row of dataRows) {
+    const label   = clean(row[0]);   // Col A — stat name (may include emoji)
+    const players = clean(row[1]);   // Col B — player name(s), comma-separated
+    const value   = clean(row[2]);   // Col C — numeric or text value
+
+    if (!label) continue;
+
+    // Split player names and check for tie
+    const names = players
+      ? players.split(',').map(n => n.trim()).filter(Boolean)
+      : [];
+    const isTie = names.length > 1;
+
+    const playersHtml = names.length
+      ? `${names.join(' &amp; ')}${isTie ? ' <span class="multi-tag">Tied</span>' : ''}`
+      : '<span style="color:#ccc">—</span>';
+
+    html += `
+      <div class="stat-card">
+        <div class="stat-card-label">${label}</div>
+        <div class="stat-card-players">${playersHtml}</div>
+        ${value ? `<div class="stat-card-value">${value}</div>` : ''}
+        <div class="stat-card-footer"></div>
+      </div>`;
+  }
+
+  gridEl.innerHTML = html;
+  statusEl.style.display = 'none';
+}
+
+// Scroll reveal
+const revEls = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('vis'), i * 80);
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08 });
+revEls.forEach(el => io.observe(el));
+
+// Guard for My Predictions button — shows a friendly message if URL not yet set
+function checkMyPredsUrl(el) {
+  if (el.href.includes('MY_PREDICTIONS_WEBAPP_URL_HERE')) {
+    alert('My Predictions is not set up yet.\nDeploy the Apps Script Web App and replace MY_PREDICTIONS_WEBAPP_URL_HERE in the HTML with the deployed URL.');
+    return false;
+  }
+  return true;
+}
+
+loadData();
+</script>
+</body>
+</html>
