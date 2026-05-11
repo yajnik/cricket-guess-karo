@@ -155,7 +155,7 @@
 
     /* ── GRID TABLE ────────────────────────────────────────────────────── */
     #results-table { display: none; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .grid-inner { min-width: 600px; position: relative; }
+    .grid-inner { min-width: 380px; position: relative; }
 
     .grid-row {
       display: grid;
@@ -197,11 +197,21 @@
       background: #f2ede0;
       box-shadow: 2px 0 8px rgba(0,0,0,0.07);
     }
+    .hcell.pts-hcell {
+      position: sticky; z-index: 3;
+      background: #f2ede0;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+    }
     .cell.pts {
       font-family: 'Playfair Display', serif; font-weight: 700;
       font-size: 1rem; color: var(--green); justify-content: center;
+      position: sticky; z-index: 2;
+      background: var(--white);
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
     }
     .cell.pts.top { color: var(--gold); }
+    .grid-row.leader-row .cell.pts { background: #fdf8ee; }
+    .grid-row.header-row .cell.pts { background: #f2ede0; }
     .cell.match { flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; }
     .pred-team {
       font-weight: 700; font-size: 0.75rem; color: var(--green);
@@ -215,19 +225,15 @@
     .hcell .result-score { font-size: 0.78rem; color: var(--gold); font-weight: 700; letter-spacing: 0; text-transform: none; }
     .hcell.player-hcell { justify-content: flex-end; }
     .hcell.pts-hcell    { justify-content: center; align-items: center; }
-    .match-winner-hcell { border-right: none !important; }
-    .match-score-hcell  { border-left: 1px dashed rgba(201,168,76,0.2) !important; justify-content: center; align-items: center; }
-    .sub-lbl {
-      font-size: 0.56rem; font-weight: 700; letter-spacing: 1.2px;
-      text-transform: uppercase; color: rgba(100,100,100,0.55);
-      margin-top: 2px;
+    .match-combo-hcell { border-right: 1px solid rgba(201,168,76,0.12) !important; justify-content: center; align-items: center; }
+    .combo-cell { justify-content: center; align-items: center; }
+    .pred-combo {
+      font-weight: 700; font-size: 0.73rem; color: var(--green);
+      background: rgba(26,77,46,0.08); padding: 3px 6px; border-radius: 5px;
+      text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 100%;
     }
-    .winner-cell { justify-content: center; }
-    .score-cell  { justify-content: center; border-left: 1px dashed rgba(201,168,76,0.15) !important; }
-    .pred-score-val {
-      font-size: 0.78rem; font-weight: 600; color: var(--muted);
-      background: rgba(0,0,0,0.04); padding: 2px 5px; border-radius: 4px;
-    }
+    .combo-cell.empty { color: #ccc; font-size: 1rem; justify-content: center; }
     .today-badge {
       display: inline-block; background: var(--gold); color: var(--white);
       font-size: 0.52rem; font-weight: 700; letter-spacing: 1px;
@@ -773,43 +779,43 @@ function renderCSV(rows) {
   if (bannerLbl) bannerLbl.textContent = leaders.length > 1 ? 'Co-leaders' : 'Current Leader';
   document.getElementById('leader-banner').classList.add('show');
 
-  const matchPairCols = matches.map(() => 'minmax(75px,0.9fr) minmax(65px,0.7fr)').join(' ');
-  const colT = `minmax(110px,1.5fr) 52px ${matchPairCols}`;
+  const matchCols = matches.map(() => 'minmax(68px,1fr)').join(' ');
+  const PLAYER_W = 100; // px — must match minmax floor in grid
+  const PTS_W    = 44;
+  const colT = `${PLAYER_W}px ${PTS_W}px ${matchCols}`;
 
   let html = `<div class="grid-inner">`;
 
   html += `<div class="grid-row header-row" style="grid-template-columns:${colT}">`;
-  html += `<div class="hcell player-hcell">Player</div>`;
-  html += `<div class="hcell pts-hcell">Pts</div>`;
+  html += `<div class="hcell player-hcell" style="left:0">Player</div>`;
+  html += `<div class="hcell pts-hcell" style="left:${PLAYER_W}px">Pts</div>`;
   matches.forEach(m => {
     const isToday = m.date && m.date.toLowerCase().replace(/-/g,' ') === tdy.replace(/-/g,' ');
-    html += `<div class="hcell match-winner-hcell">`;
+    html += `<div class="hcell match-combo-hcell">`;
     html += `<span class="match-teams">${m.teams}</span>`;
     if (m.date)         html += `<span class="match-date">${m.date}</span>`;
     if (isToday)        html += `<span class="today-badge">Today</span>`;
-    if (m.resultWinner) html += `<span class="match-result">✓ ${m.resultWinner}</span>`;
-    html += `<span class="sub-lbl">Winner</span></div>`;
-    html += `<div class="hcell match-score-hcell">`;
-    if (m.resultScore)  html += `<span class="match-result result-score">${m.resultScore}</span>`;
-    html += `<span class="sub-lbl">Score</span></div>`;
+    if (m.resultWinner || m.resultScore) {
+      const combo = [m.resultWinner, m.resultScore].filter(Boolean).join('/');
+      html += `<span class="match-result">✓ ${combo}</span>`;
+    }
+    html += `<span class="sub-lbl">Pick/Score</span></div>`;
   });
   html += `</div>`;
 
   players.forEach(p => {
     const isLeader = leaderSet.has(p.name);
     html += `<div class="grid-row${isLeader ? ' leader-row' : ''}" style="grid-template-columns:${colT}">`;
-    html += `<div class="cell player">${isLeader ? '<span>👑</span>' : ''}${p.name}</div>`;
-    html += `<div class="cell pts${isLeader ? ' top' : ''}">${p.pts !== undefined ? p.pts : '—'}</div>`;
+    html += `<div class="cell player" style="left:0">${isLeader ? '<span>👑</span>' : ''}${p.name}</div>`;
+    html += `<div class="cell pts${isLeader ? ' top' : ''}" style="left:${PLAYER_W}px">${p.pts !== undefined ? p.pts : '—'}</div>`;
     p.preds.forEach(pred => {
-      if (!pred.winner || isBlankCell(pred.winner)) {
-        html += `<div class="cell match empty">—</div>`;
+      const hasWinner = pred.winner && !isBlankCell(pred.winner);
+      const hasScore  = pred.score  && !isBlankCell(pred.score);
+      if (!hasWinner && !hasScore) {
+        html += `<div class="cell match combo-cell empty">—</div>`;
       } else {
-        html += `<div class="cell match winner-cell"><span class="pred-team">${pred.winner}</span></div>`;
-      }
-      if (!pred.score || isBlankCell(pred.score)) {
-        html += `<div class="cell match score-cell empty">—</div>`;
-      } else {
-        html += `<div class="cell match score-cell"><span class="pred-score-val">${pred.score}</span></div>`;
+        const label = [hasWinner ? pred.winner : null, hasScore ? pred.score : null].filter(Boolean).join('/');
+        html += `<div class="cell match combo-cell"><span class="pred-combo">${label}</span></div>`;
       }
     });
     html += `</div>`;
